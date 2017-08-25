@@ -6,20 +6,21 @@ package com.intel.ClosingTheGap
 {
   object NativePagerank
   {
-    def run(sc : org.apache.spark.SparkContext, myrdd: org.apache.spark.rdd.RDD[(Int,Int,Int)], numIter : Int, shouldFail : Int) =
+    def run(sc : org.apache.spark.SparkContext, 
+      myrdd: org.apache.spark.rdd.RDD[(Int,Int,Int)], numIter : Int) =
     {
       val inputSize = (edges : Array[(Int, Int, Int)]) => { 4 + 12 * edges.length }
       val inputWrite = (edges : Array[(Int, Int, Int)], stream : java.nio.ByteBuffer) => {
         var cnt = 0
-	val maxcnt = edges.length
-	stream.putInt(maxcnt)
-	while(cnt < maxcnt)
-	{
+        val maxcnt = edges.length
+        stream.putInt(maxcnt)
+        while(cnt < maxcnt)
+        {
           stream.putInt(edges(cnt)._1)
           stream.putInt(edges(cnt)._2)
           stream.putInt(edges(cnt)._3)
-	  cnt = cnt + 1
-	}
+          cnt = cnt + 1
+        }
       }
 
       val outputRead = (stream : java.nio.ByteBuffer) => {
@@ -40,28 +41,13 @@ package com.intel.ClosingTheGap
       val nativeOutputs = SparkNativeInterface.EmptyNative(nativeData)
 
       // Run MPI
-      SparkNativeInterface.runMPI(nativeData, Array(nativeOutputs), "/home/anderso2/ClosingTheGap/bin/Pagerank", Array[String](numIter.toString, 0.toString))
+      SparkNativeInterface.runMPI(nativeData, Array(nativeOutputs),
+        "../bin/Pagerank", Array[String](numIter.toString, 0.toString))
 
       // Delete input data from shared memory
       SparkNativeInterface.delete(nativeData)
 
       val t3 = System.currentTimeMillis
-      // Fail on first iteration
-      if(shouldFail == 1)
-      {
-        println("Copy to shm Time: " + ((t2-t1)/1000.0).toString)
-        println("Run MPI Time: " + ((t3-t2)/1000.0).toString)
-
-        // Kill a node, then force recomputation
-	println("Killing process")
-        import sys.process._
-	val commandStr1 = "ssh pcl-me60 sudo /usr/bin/pkill -f spark"
-	val commandStr2 = "ssh pcl-me60 sudo /usr/bin/pkill -f hadoop" 
-	commandStr1 .!
-	commandStr2 .!
-        Thread.sleep(10000)
-        throw new java.io.FileNotFoundException
-      }
 
       // Copy output data from shared memory to HDFS
       val HDFSPath = SparkNativeInterface.NativeToHDFS(nativeOutputs)
@@ -72,18 +58,19 @@ package com.intel.ClosingTheGap
       SparkNativeInterface.delete(nativeOutputs)
 
       // Deserialize output data and copy into RDD
-      val output = SparkNativeInterface.NativeToRDD(sc, outputRead, HDFSPath, 44 * (nativeData._2).toInt, 12)
-                                       .repartition(44 * (nativeData._2).toInt).cache
-      output.count
+      val output = SparkNativeInterface.NativeToRDD(sc, 
+        outputRead, HDFSPath, 44 * (nativeData._2).toInt, 12)
+        .repartition(44 * (nativeData._2).toInt).cache
+        output.count
 
-      val t5 = System.currentTimeMillis
+        val t5 = System.currentTimeMillis
 
-      println("Run MPI Time: " + ((t3-t2)/1000.0).toString)
-      println("Write to HDFS Time: " + ((t4-t3)/1000.0).toString)
-      println("Read from HDFS Time: " + ((t5-t4)/1000.0).toString)
+        println("Run MPI Time: " + ((t3-t2)/1000.0).toString)
+        println("Write to HDFS Time: " + ((t4-t3)/1000.0).toString)
+        println("Read from HDFS Time: " + ((t5-t4)/1000.0).toString)
 
-      // Return output RDD
-      output
+        // Return output RDD
+        output
     }
   }
 }

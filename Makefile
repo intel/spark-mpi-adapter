@@ -2,8 +2,8 @@ all: bin/Pagerank bin/SaveHDFS
 
 MPICXX=mpicxx -cxx=icpc
 HADOOP_PATH=/export/swtools/hadoop
-GMPATH=../GraphMat/src
-GPPATH=../GraphMat/GraphMatDistributedPrimitives
+GMPATH ?= ../GraphMat/src
+GPPATH ?= ../GraphMat/GraphMatDistributedPrimitives
 GMFLAGS=-I$(GMPATH) -I$(GPPATH)
 CFLAGS=$(GMFLAGS) -std=c++11 -qopenmp -O2 -I$(HADOOP_PATH)/include -ipo
 LDFLAGS=-L$(HADOOP_PATH)/lib/native -lhdfs
