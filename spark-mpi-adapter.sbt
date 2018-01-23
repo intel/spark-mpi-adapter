@@ -1,0 +1,7 @@
+name := "spark-mpi-adapter"
+organization := "com.intel"
+version := "0.1-SNAPSHOT"
+scalaVersion := "2.10.5"
+libraryDependencies += "org.apache.spark" %% "spark-core" % "2.0.0" 
+libraryDependencies += "org.apache.spark" %% "spark-graphx" % "2.0.0" 
+libraryDependencies += "org.apache.spark" %% "spark-mllib" % "2.0.0" 

@@ -7,3 +7,61 @@ Michael Anderson, Shaden Smith, Narayanan Sundaram, Mihai Capotă, Zheguang Zhao
 https://doi.org/10.14778/3090163.3090168
 
 http://www.vldb.org/pvldb/vol10/p901-anderson.pdf
+
+## Prerequisites
+
+1. `HADOOP_HDFS_HOME` environment variable set to the Hadoop install directory,
+   such that `HADOOP_HDFS_HOME/include` contains `hdfs.h` and
+   `HADOOP_HDFS_HOME/lib/native` contains `libhdfs.so`.
+
+2. Spark running in standalone mode. Other modes are not supported.
+
+## Installation
+
+1. Install Scala library
+
+```
+sbt publishLocal
+```
+
+2. Install library & helper script
+
+```
+mkdir build
+cd build
+cmake ..
+make
+cp ../src/main/native/*.h .
+cp ../scripts/*.sh .
+export MPI_ADAPTER_FOR_SPARK_HOME=$(pwd)
+cd ..
+```
+
+## Examples
+
+1. Build example Scala library
+
+```
+cd examples
+sbt package
+```
+
+2. Build example native code
+
+```
+mkdir build
+cd build
+cmake ..
+make
+export MPI_ADAPTER_FOR_SPARK_EXAMPLES=$(pwd)
+cd ..
+```
+
+3. Run
+
+```
+spark-submit --jars \
+../target/scala-2.10/spark-mpi-adapter_2.10-0.1-SNAPSHOT.jar \
+target/scala-2.10/spark-mpi-adapter-examples_2.10-0.1-SNAPSHOT.jar \
+com.intel.MPIAdapterForSpark.VectorIncrement
+```

@@ -1,9 +1,9 @@
 
 #include <sys/time.h>
 #include <iostream>
-#include "SparkIntegration.h"
+#include "spark-integration.h"
 
-void main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   assert(argc == 3);
   const char *rddBase = argv[1];
   const char *rddBaseOut = argv[2];
@@ -36,4 +36,5 @@ void main(int argc, char *argv[]) {
   }
 
   MPI_Finalize();
+  return 0;
 }

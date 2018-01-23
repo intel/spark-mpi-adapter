@@ -1,4 +1,4 @@
-package com.intel.ClosingTheGap
+package com.intel.MPIAdapterForSpark
 {
   object SparkNativeInterface extends Serializable
   {
@@ -125,7 +125,7 @@ package com.intel.ClosingTheGap
       val tmpdir = hdfsBase + "/" + java.util.Calendar.getInstance().getTime.toString.replaceAll(" ", "_").replaceAll(":","_")
       val commandStr = ("mpiexec -env OMP_NUM_THREADS 44 -env I_MPI_PIN_DOMAIN omp -env I_MPI_FABRICS=tmi -n "
         + nativeData._2.toString + " -hostfile " + "/dev/shm/btg" + nativeData._1.toString + "_" + "hostfile -perhost 1 "
-        + "../bin/SaveHDFS" + " " + "/dev/shm/btg" + nativeData._1.toString + "_" + " " + tmpdir.toString)
+        + sys.env("MPI_ADAPTER_FOR_SPARK_HOME") + "/shm-to-hdfs" + " " + "/dev/shm/btg" + nativeData._1.toString + "_" + " " + tmpdir.toString)
       println(commandStr)
       val retval = commandStr .!
       if(retval != 0)
@@ -139,7 +139,7 @@ package com.intel.ClosingTheGap
     {
       import sys.process._
       val commandStr = ("mpiexec  -n " + nativeData._2.toString + " -hostfile " + "/dev/shm/btg"
-        + nativeData._1.toString + "_" + "hostfile -perhost 1 ../scripts/mpiclear.sh " + nativeData._1.toString)
+        + nativeData._1.toString + "_" + "hostfile -perhost 1 " + sys.env("MPI_ADAPTER_FOR_SPARK_HOME") + "/mpiclear.sh " + nativeData._1.toString)
       println(commandStr)
       val retval = commandStr .!
       if(retval != 0)
