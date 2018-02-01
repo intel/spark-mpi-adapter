@@ -16,11 +16,6 @@
 #include <cerrno>
 #include "hdfs.h"
 
-unsigned long getTimeInMilliseconds(struct timeval t) {
-  return ((unsigned long)t.tv_sec) * ((unsigned long)1000) +
-         ((unsigned long)t.tv_usec) / ((unsigned long)1000);
-}
-
 namespace SparkIntegration {
 
 struct partition {
@@ -72,7 +67,7 @@ binaryFiles(const char *rddBase) // change this to return edge pointer
 
   assert(ranks.size() == pnums.size());
   assert(pnums.size() == sizes.size());
-  for (size_t i = 0; i < ranks.size(); i++) {
+  for (uint32_t i = 0; i < ranks.size(); i++) {
     if (ranks[i] == rank) {
       std::stringstream ss;
       ss << rddBase << i;
@@ -80,7 +75,7 @@ binaryFiles(const char *rddBase) // change this to return edge pointer
       int fd = open(ss.str().c_str(), O_RDONLY);
       std::cout << "errno: " << strerror(errno) << std::endl;
       assert(fd != -1);
-      unsigned long int nbytes = sizes[i];
+      uint32_t nbytes = sizes[i];
       void *edge_addr =
           mmap(NULL, nbytes, PROT_READ, MAP_SHARED | MAP_POPULATE, fd, 0);
       partitions.push_back({ i, sizes[i], edge_addr });
@@ -223,16 +218,8 @@ void SaveHDFS(std::vector<partition> partitions, const char *rddBaseOut) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  struct timeval tv_start, tv_end;
-  double time;
-  gettimeofday(&tv_start, 0);
   hdfsFS handle = hdfsConnect("default", 0);
-  gettimeofday(&tv_end, 0);
-  time = (tv_end.tv_sec - tv_start.tv_sec) * 1e3 +
-         (tv_end.tv_usec - tv_start.tv_usec) * 1e-3;
-  std::cout << "handle time: " << time << std::endl;
 
-  gettimeofday(&tv_start, 0);
 #pragma omp parallel for
   for (size_t p = 0; p < partitions.size(); p++) {
     if (partitions[p].num_bytes > 0) {
@@ -245,17 +232,7 @@ void SaveHDFS(std::vector<partition> partitions, const char *rddBaseOut) {
       assert(!hdfsFlush(handle, f));
     }
   }
-  gettimeofday(&tv_end, 0);
-  time = (tv_end.tv_sec - tv_start.tv_sec) * 1e3 +
-         (tv_end.tv_usec - tv_start.tv_usec) * 1e-3;
-  std::cout << "write time: " << time << std::endl;
-
-  gettimeofday(&tv_start, 0);
   hdfsDisconnect(handle);
-  gettimeofday(&tv_end, 0);
-  time = (tv_end.tv_sec - tv_start.tv_sec) * 1e3 +
-         (tv_end.tv_usec - tv_start.tv_usec) * 1e-3;
-  std::cout << "disconnect time: " << time << std::endl;
 }
 }
 
